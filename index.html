@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phishing URL Checker</title>
+    <style>
+        /* General page styling */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #1c2b3c;
+            color: white;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 50px;
+            background-color: #1a2332;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            color: #3498db;
+        }
+
+        p {
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        input[type="text"] {
+            padding: 16px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 500px;
+            background-color: #2c313a;
+            color: white;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            background-color: #444d58;
+        }
+
+        button {
+            padding: 16px;
+            font-size: 18px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .results {
+            margin-top: 30px;
+            font-size: 18px;
+            text-align: left;
+        }
+
+        .result-item {
+            background-color: #2c313a;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .status {
+            font-size: 18px;
+            color: green;
+        }
+
+        .status.phishing {
+            color: red;
+        }
+
+        #percentage {
+            font-size: 20px;
+            margin-top: 30px;
+            color: #3498db;
+        }
+
+        footer {
+            position: absolute;
+            bottom: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #777;
+        }
+
+        footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Phishing URL Checker</h1>
+        <p>Our phishing URL checker detects if a URL is malicious or contains a phishing link.</p>
+
+        <div class="input-group">
+            <input type="text" id="url-input" placeholder="example.com" />
+            <button onclick="checkUrl()">Scan</button>
+        </div>
+
+        <div id="result" class="results"></div>
+        <div id="percentage"></div>
+    </div>
+
+    <footer>
+        <p>Powered by <a href="#">Your Company</a></p>
+    </footer>
+
+    <script>
+        function checkUrl() {
+            const url = document.getElementById('url-input').value.trim();
+
+            if (!url) {
+                alert("Please enter a URL to check.");
+                return;
+            }
+
+            // Send the URL to the backend for checking
+            fetch('/check', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ query: url })
+            })
+            .then(response => response.json())
+            .then(data => {
+                let resultHtml = "<h2>Detection Results:</h2>";
+                let phishingCount = 0;
+
+                if (data.result && data.result.length > 0) {
+                    data.result.forEach(item => {
+                        const phishingStatus = item.phishing ? 'Yes' : 'No';
+                        const statusClass = item.phishing ? 'status phishing' : 'status';
+                        
+                        resultHtml += `
+                            <div class="result-item">
+                                <div class="model-name">${item.model}</div>
+                                <div class="${statusClass}">Phishing: ${phishingStatus}</div>
+                            </div>
+                        `;
+
+                        if (item.phishing) {
+                            phishingCount++;
+                        }
+                    });
+
+                    // Calculate percentage of phishing results
+                    const percentage = (phishingCount / data.result.length) * 100;
+                    document.getElementById('percentage').innerText = `Phishing Likelihood: ${percentage.toFixed(2)}%`;
+                } else {
+                    resultHtml += `<p>No result available.</p>`;
+                }
+
+                document.getElementById('result').innerHTML = resultHtml;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("An error occurred while processing the URL.");
+            });
+        }
+    </script>
+</body>
+
+</html>
